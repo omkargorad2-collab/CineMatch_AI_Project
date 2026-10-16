@@ -9,7 +9,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from demo_data import DEMO_MOVIES
-from recommender import recommend
+from recommender import recommend, detect_genres
 
 load_dotenv()
 TOKEN = os.getenv("TMDB_BEARER_TOKEN", "").strip()
