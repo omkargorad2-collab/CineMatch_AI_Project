@@ -126,13 +126,20 @@ def get_recommendations(
     # Pull current metadata when TMDB is configured; demo data is fallback.
     movies = discover_movies(year=year, language=language, page=1, sort="popularity.desc")
     # Use several pages for a broader recommendation pool when available.
-    if TOKEN and not year:
+        if TOKEN and not year:
         for page in (2, 3):
-            movies.extend(discover_movies(year=None, language=language, page=page))
+            movies.extend(
+                discover_movies(year=None, language=language, page=page)
+            )
+
     # Deduplicate by ID/title.
-        unique = {}
+    unique = {}
+
     for m in movies:
         unique[m.get("id") or m.get("title")] = m
+
+    # Fetch additional movies matching the requested genre
+    requested_genres = detect_genres(q)
 
     # Fetch additional movies matching the requested genre
     requested_genres = detect_genres(q)
