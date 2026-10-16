@@ -133,6 +133,41 @@ def get_recommendations(
     unique = {}
     for m in movies:
         unique[m.get("id") or m.get("title")] = m
+            # Fetch additional movies matching the requested genre
+    requested_genres = detect_genres(q)
+
+    if TOKEN and requested_genres:
+        genre_data = tmdb_get("/genre/movie/list")
+
+        genre_ids = [
+            str(g["id"])
+            for g in (genre_data or {}).get("genres", [])
+            if g["name"].lower() in requested_genres
+        ]
+
+        if genre_ids:
+            for page in (1, 2, 3):
+                params = {
+                    "with_genres": "|".join(genre_ids),
+                    "sort_by": "popularity.desc",
+                    "page": page,
+                    "include_adult": "false",
+                }
+
+                if language != "all":
+                    params["with_original_language"] = language
+
+                if year:
+                    params["primary_release_year"] = year
+
+                data = tmdb_get("/discover/movie", params)
+
+                if data:
+                    genres = genre_map()
+
+                    for movie in data.get("results", []):
+                        normalized = normalize_tmdb(movie, genres)
+                        unique[normalized["id"]] = normalized
     results = recommend(q, list(unique.values()), limit=limit)
     return {"query": q, "results": results, "using_tmdb": bool(TOKEN)}
 
