@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from .demo_data import DEMO_MOVIES
-from .recommender import recommend
+from demo_data import DEMO_MOVIES
+from recommender import recommend
 
 load_dotenv()
 TOKEN = os.getenv("TMDB_BEARER_TOKEN", "").strip()
