@@ -130,10 +130,11 @@ def get_recommendations(
         for page in (2, 3):
             movies.extend(discover_movies(year=None, language=language, page=page))
     # Deduplicate by ID/title.
-    unique = {}
+        unique = {}
     for m in movies:
         unique[m.get("id") or m.get("title")] = m
-            # Fetch additional movies matching the requested genre
+
+    # Fetch additional movies matching the requested genre
     requested_genres = detect_genres(q)
 
     if TOKEN and requested_genres:
