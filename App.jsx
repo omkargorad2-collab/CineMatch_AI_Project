@@ -95,6 +95,12 @@ export default function App() {
       if (!res.ok) throw new Error('Recommendation API failed')
       const data = await res.json()
       setMovies(data.results || [])
+      setTimeout(() => {
+  document.querySelector('.catalogue')?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  })
+}, 200)
       setUsingTmdb(Boolean(data.using_tmdb))
       if (!data.results?.length) setError('No matching movies found for those filters. Try another language or year.')
     } catch {
