@@ -21,7 +21,12 @@ IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 app = FastAPI(title="CineMatch AI API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://cine-match-ai-project.vercel.app"],
+    allow_origins=[
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://cine-match-ai-project.vercel.app",
+    "https://cine-match-ai-project-am8afuw62-omsanti.vercel.app"
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
