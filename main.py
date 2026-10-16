@@ -161,3 +161,50 @@ def watch_options(title: str = Query(min_length=1, max_length=200)):
         "legal_streaming_search": f"https://www.justwatch.com/in/search?q={q}",
         "note": "Availability varies by region and subscription. This API does not provide movie files."
     }
+@app.get("/api/search")
+def search_movies(
+    q: str = Query(min_length=1, max_length=200),
+    language: str = "all",
+    year: Optional[int] = Query(default=None, ge=1900, le=2100),
+):
+    params = {
+        "query": q,
+        "include_adult": "false",
+        "page": 1,
+    }
+
+    if year:
+        params["year"] = year
+
+    data = tmdb_get("/search/movie", params)
+
+    if data and "results" in data:
+        genres = genre_map()
+        movies = [
+            normalize_tmdb(m, genres)
+            for m in data["results"]
+        ]
+
+        if language != "all":
+            movies = [
+                m for m in movies
+                if m["original_language"] == language
+            ]
+
+        # Exact title matches appear first.
+        movies.sort(
+            key=lambda m: (
+                m["title"].lower() != q.strip().lower(),
+                -m["vote_average"]
+            )
+        )
+
+        return {
+            "results": movies,
+            "using_tmdb": True
+        }
+
+    return {
+        "results": [],
+        "using_tmdb": False
+    }
