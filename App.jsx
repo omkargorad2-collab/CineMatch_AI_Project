@@ -85,34 +85,102 @@ export default function App() {
   }
 
   async function searchRecommendations(text = query) {
-    if (!text.trim()) { setError('Type a movie mood, plot idea, genre or a title first.'); return }
-    setBusy(true); setError(''); setMode('recommendations')
-    try {
-      const params = new URLSearchParams({ q: text.trim(), limit: '18' })
-      if (language !== 'all') params.set('language', language)
-      if (year !== 'all') params.set('year', year)
-      const res = await fetch(`${API}/api/recommend?${params}`)
-      if (!res.ok) throw new Error('Recommendation API failed')
-      const data = await res.json()
-      setMovies(data.results || [])
-      setTimeout(() => {
-  document.querySelector('.catalogue')?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
-  })
-}, 200)
-      setUsingTmdb(Boolean(data.using_tmdb))
-      if (!data.results?.length) setError('No matching movies found for those filters. Try another language or year.')
-    } catch {
-      const words = text.toLowerCase().split(/\W+/).filter(w => w.length > 2)
-      const ranked = FALLBACK.map(m => ({...m, match_score: words.filter(w => `${m.title} ${m.overview} ${(m.genre_names||[]).join(' ')}`.toLowerCase().includes(w)).length}))
-        .filter(m => (language === 'all' || m.original_language === language) && (year === 'all' || yearOf(m) === year))
-        .sort((a,b) => b.match_score-a.match_score)
-      setMovies(ranked)
-      setUsingTmdb(false)
-      setError('Backend is offline. These are basic demo matches, not full NLP recommendations.')
-    } finally { setBusy(false) }
+  const searchText = text.trim()
+
+  if (!searchText) {
+    setError('Enter a movie name, mood or description first.')
+    return
   }
+
+  setBusy(true)
+  setError('')
+  setMode('recommendations')
+
+  try {
+    const params = new URLSearchParams({
+      q: searchText,
+      limit: '18'
+    })
+
+    if (language !== 'all') params.set('language', language)
+    if (year !== 'all') params.set('year', year)
+
+    const [searchResponse, recommendResponse] = await Promise.all([
+      fetch(`${API}/api/search?${params}`),
+      fetch(`${API}/api/recommend?${params}`)
+    ])
+
+    if (!recommendResponse.ok) {
+      throw new Error('Recommendation API failed')
+    }
+
+    const recommendationData = await recommendResponse.json()
+
+    let titleMatches = []
+
+    if (searchResponse.ok) {
+      const searchData = await searchResponse.json()
+      titleMatches = searchData.results || []
+    }
+
+    const normalizedQuery = searchText.toLowerCase()
+
+    const exactMatches = titleMatches.filter(
+      movie => movie.title?.toLowerCase() === normalizedQuery
+    )
+
+    const partialMatches = titleMatches.filter(
+      movie =>
+        movie.title?.toLowerCase().includes(normalizedQuery) &&
+        movie.title?.toLowerCase() !== normalizedQuery
+    )
+
+    // Use title search only when a meaningful title match exists.
+    const movieResults =
+      exactMatches.length || partialMatches.length
+        ? [...exactMatches, ...partialMatches]
+        : []
+
+    const combined = [
+      ...movieResults,
+      ...(recommendationData.results || [])
+    ]
+
+    const unique = Array.from(
+      new Map(
+        combined.map(movie => [
+          movie.id || movie.title,
+          movie
+        ])
+      ).values()
+    )
+
+    setMovies(unique.slice(0, 30))
+    setUsingTmdb(
+      Boolean(recommendationData.using_tmdb)
+    )
+
+    if (!unique.length) {
+      setError('No matching movies found. Try another search.')
+    }
+
+    setTimeout(() => {
+      document.querySelector('.catalogue')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }, 300)
+
+  } catch (err) {
+    console.error('Search error:', err)
+
+    setError(
+      'Unable to load recommendations. Please try again.'
+    )
+  } finally {
+    setBusy(false)
+  }
+}
 
   function toggleSave(movie) {
     setSaved(old => {
