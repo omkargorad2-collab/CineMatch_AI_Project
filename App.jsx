@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search, Sparkles, Film, Play, ExternalLink, Clapperboard, Languages, CalendarDays, Star, Heart, X, LoaderCircle, SlidersHorizontal } from 'lucide-react'
 
-const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+const API = 'https://cinematch-ai-backend-ss47.onrender.com'
 const LANGS = [
   ['all','All languages'], ['en','English / Hollywood'], ['hi','Hindi / Bollywood'],
   ['mr','Marathi'], ['ta','Tamil'], ['te','Telugu'], ['ml','Malayalam'],
