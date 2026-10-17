@@ -105,10 +105,21 @@ export default function App() {
     if (language !== 'all') params.set('language', language)
     if (year !== 'all') params.set('year', year)
 
-    const [searchResponse, recommendResponse] = await Promise.all([
-      fetch(`${API}/api/search?${params}`),
-      fetch(`${API}/api/recommend?${params}`)
-    ])
+    const [searchResult, recommendResult] = await Promise.allSettled([
+  fetch(`${API}/api/search?${params}`),
+  fetch(`${API}/api/recommend?${params}`)
+])
+
+if (recommendResult.status !== 'fulfilled') {
+  throw new Error('Recommendation API connection failed')
+}
+
+const recommendResponse = recommendResult.value
+
+const searchResponse =
+  searchResult.status === 'fulfilled'
+    ? searchResult.value
+    : { ok: false }
 
     if (!recommendResponse.ok) {
       throw new Error('Recommendation API failed')
